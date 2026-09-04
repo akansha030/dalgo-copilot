@@ -206,6 +206,11 @@ interface CopilotState {
   runScenario: (key: ScenarioKey) => void;
   patchAnswer: (id: number, fn: (m: AnswerMsg) => AnswerMsg) => void;
 
+  // conversation history (mock sessions) — manageable: rename / delete
+  history: { t: string; q: string }[];
+  renameHistory: (i: number, title: string) => void;
+  deleteHistory: (i: number) => void;
+
   // full-view: left conversation sidebar (New chat + History)
   copilotSidebarOpen: boolean;
   toggleCopilotSidebar: () => void;
@@ -282,6 +287,14 @@ export const useCopilotStore = create<CopilotState>((set, get) => ({
   busy: false,
   input: '',
   enabled: true,
+  history: [
+    { t: 'Enrolment over 6 months', q: 'How has enrolment changed over the last 6 months?' },
+    { t: 'Completed surveys in Pune', q: 'How many surveys were completed in Pune last month?' },
+    { t: 'District performance', q: 'Which districts are performing well?' },
+    { t: 'Completed vs pending', q: 'Compare completed vs pending surveys by district' },
+  ],
+  renameHistory: (i, title) => set((s) => ({ history: s.history.map((h, idx) => (idx === i ? { ...h, t: title } : h)) })),
+  deleteHistory: (i) => set((s) => ({ history: s.history.filter((_, idx) => idx !== i) })),
   copilotSidebarOpen: false,
   editorOpen: false,
   editorItem: null,

@@ -1,21 +1,28 @@
 'use client';
 
-/** Left conversation sidebar in the full view — New chat + History. Toggled by the header
- *  sidebar icon. Opening it auto-collapses the main platform sidebar (see main-layout). */
+/** Left conversation sidebar in the full view — New chat + History (rename/delete via a
+ *  three-dot menu per session) + the design-only preview-states panel. Toggled by the
+ *  header sidebar icon. Opening it auto-collapses the main platform sidebar (see main-layout). */
 
+import { useState } from 'react';
 import { useCopilotStore, SCENARIOS } from '@/stores/copilotStore';
 import { Ico, P } from './copilot-conversation';
 
-const HISTORY: { t: string; q: string }[] = [
-  { t: 'Enrolment over 6 months', q: 'How has enrolment changed over the last 6 months?' },
-  { t: 'Completed surveys in Pune', q: 'How many surveys were completed in Pune last month?' },
-  { t: 'District performance', q: 'Which districts are performing well?' },
-  { t: 'Completed vs pending', q: 'Compare completed vs pending surveys by district' },
-];
+const DOTS = 'M12 5v.01M12 12v.01M12 19v.01';
+const PENCIL = 'M17 3a2.85 2.85 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z';
 
 export function CopilotSidebar() {
-  const { copilotSidebarOpen, reset, ask, runScenario } = useCopilotStore();
+  const { copilotSidebarOpen, reset, ask, runScenario, history, renameHistory, deleteHistory } = useCopilotStore();
+  const [menuFor, setMenuFor] = useState<number | null>(null);
+  const [editing, setEditing] = useState<number | null>(null);
+  const [draft, setDraft] = useState('');
+
   if (!copilotSidebarOpen) return null;
+
+  const commitRename = () => {
+    if (editing !== null && draft.trim()) renameHistory(editing, draft.trim());
+    setEditing(null);
+  };
 
   return (
     <aside className="cp-convside">
@@ -23,7 +30,7 @@ export function CopilotSidebar() {
         <Ico d={P.plus} s={16} c="var(--teal)" /> New chat
       </button>
       <div className="cp-histlabel">History</div>
-      {HISTORY.length === 0 ? (
+      {history.length === 0 ? (
         <div style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text3)' }}>
           <div style={{ display: 'inline-grid', placeItems: 'center', width: 36, height: 36, borderRadius: 10, background: 'var(--surface)', marginBottom: 8 }}>
             <Ico d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={17} c="var(--placeholder)" />
@@ -32,11 +39,48 @@ export function CopilotSidebar() {
         </div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
-          {HISTORY.map((h) => (
-            <button key={h.t} className="cp-histitem" onClick={() => { reset(); ask(h.q); }}>
-              <Ico d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={15} c="var(--text3)" />
-              <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.t}</span>
-            </button>
+          {history.map((h, i) => (
+            <div key={`${h.q}-${i}`} className="cp-histrow">
+              {editing === i ? (
+                <input
+                  autoFocus
+                  className="cp-histedit"
+                  value={draft}
+                  onFocus={(e) => e.target.select()}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') commitRename(); if (e.key === 'Escape') setEditing(null); }}
+                  onBlur={commitRename}
+                />
+              ) : (
+                <>
+                  <button className="cp-histitem" onClick={() => { reset(); ask(h.q); }}>
+                    <Ico d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={15} c="var(--text3)" />
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.t}</span>
+                  </button>
+                  <button
+                    className={`cp-iconbtn cp-histdots ${menuFor === i ? 'open' : ''}`}
+                    title="Options"
+                    aria-label="Session options"
+                    onClick={(e) => { e.stopPropagation(); setMenuFor(menuFor === i ? null : i); }}
+                  >
+                    <Ico d={DOTS} s={15} c="var(--text3)" sw={2.6} />
+                  </button>
+                  {menuFor === i && (
+                    <>
+                      <div style={{ position: 'fixed', inset: 0, zIndex: 19 }} onClick={() => setMenuFor(null)} />
+                      <div className="cp-histmenu">
+                        <button onClick={() => { setEditing(i); setDraft(h.t); setMenuFor(null); }}>
+                          <Ico d={PENCIL} s={14} c="var(--text2)" /> Rename
+                        </button>
+                        <button className="danger" onClick={() => { deleteHistory(i); setMenuFor(null); }}>
+                          <Ico d={P.trash} s={14} c="var(--alert)" /> Delete
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
+            </div>
           ))}
         </div>
       )}

@@ -131,7 +131,7 @@ export function CopilotConversation({ compact, mini = false, onVisual }: { compa
             <div style={{ textAlign: 'center', marginBottom: 28 }}>
               <div style={{ fontSize: compact ? 24 : 34, fontWeight: 700, letterSpacing: '-0.6px', color: 'var(--text)', lineHeight: 1.15 }}>What can I help you find?</div>
               <div style={{ fontSize: compact ? 14 : 16, color: 'var(--text3)', lineHeight: 1.6, marginTop: 10, maxWidth: 520, marginLeft: 'auto', marginRight: 'auto' }}>
-                Ask in plain English — answers come from your connected data, and I can turn them into a chart or KPI.
+                Ask any question regarding your data — answers come from your connected data, and I can turn them into a chart or KPI.
               </div>
             </div>
             {composer(true)}
@@ -154,7 +154,7 @@ export function CopilotConversation({ compact, mini = false, onVisual }: { compa
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
                     <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.4px', color: 'var(--text)' }}>What can I help you find?</div>
                     <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8, maxWidth: 290, lineHeight: 1.55 }}>
-                      Ask in plain English — answers come from your connected data, and I can turn them into a chart or KPI.
+                      Ask any question regarding your data — answers come from your connected data, and I can turn them into a chart or KPI.
                     </div>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, paddingBottom: 12 }}>
@@ -411,8 +411,17 @@ const CSS = `
 .cp-newchat { display:flex; align-items:center; gap:8px; width:100%; padding:10px 12px; border:1px solid var(--teal); border-radius:9px; background:var(--surface); color:var(--teal); font-size:14px; font-weight:600; cursor:pointer; font-family:inherit; margin-bottom:14px; }
 .cp-newchat:hover { background:var(--teal-light); }
 .cp-histlabel { font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--text3); font-weight:600; margin-bottom:6px; padding:0 4px; }
-.cp-histitem { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-radius:8px; font-size:14px; color:var(--text2); cursor:pointer; font-family:inherit; }
+.cp-histitem { display:flex; align-items:center; gap:8px; width:100%; text-align:left; padding:8px 10px; border:none; background:none; border-radius:8px; font-size:14px; color:var(--text2); cursor:pointer; font-family:inherit; min-width:0; }
 .cp-histitem:hover { background:var(--surface-hover); color:var(--text); }
+.cp-histrow { position:relative; display:flex; align-items:center; gap:2px; }
+.cp-histrow .cp-histitem { flex:1; }
+.cp-histdots { width:26px; height:26px; flex-shrink:0; opacity:0; transition:.12s; }
+.cp-histrow:hover .cp-histdots, .cp-histdots.open { opacity:1; }
+.cp-histmenu { position:absolute; right:0; top:34px; background:var(--surface); border:1px solid var(--border); border-radius:10px; box-shadow:0 8px 24px rgba(0,0,0,.12); padding:4px; min-width:132px; z-index:20; }
+.cp-histmenu button { display:flex; align-items:center; gap:9px; width:100%; text-align:left; padding:8px 10px; border:none; background:none; font-size:13.5px; color:var(--text); border-radius:7px; cursor:pointer; font-family:inherit; }
+.cp-histmenu button:hover { background:var(--surface-hover); }
+.cp-histmenu button.danger { color:var(--alert); }
+.cp-histedit { width:100%; border:1px solid var(--teal); border-radius:8px; padding:7px 10px; font-size:14px; font-family:inherit; color:var(--text); outline:none; box-shadow:0 0 0 3px rgba(0,137,123,.10); }
 .cp-drawer { position:fixed; top:0; right:0; height:100vh; width:440px; max-width:92vw; background:var(--surface); border-left:1px solid var(--border);
   box-shadow:-12px 0 40px rgba(0,0,0,.10); z-index:1201; display:flex; flex-direction:column; animation:cp-slide .22s ease; }
 .cp-overlay { position:fixed; inset:0; background:rgba(0,0,0,.12); z-index:1200; }
