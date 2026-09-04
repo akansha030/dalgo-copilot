@@ -5,9 +5,10 @@
  *  drafts it from the connected data (and optional website), then stays editable. */
 
 import { useState } from 'react';
-import { HelpCircle, Sparkles, ArrowDown, RotateCw } from 'lucide-react';
+import { HelpCircle, ArrowDown, RotateCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useCopilotStore } from '@/stores/copilotStore';
+import { Sparkle } from '@/components/copilot/copilot-conversation';
 
 function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -88,7 +89,7 @@ export default function CopilotSettingsPage() {
             {/* Generate card (Clay-style) */}
             <div className="mt-3 rounded-lg border bg-muted/40 p-4">
               <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary" />
+                <Sparkle s={16} c="#00897b" />
                 <span className="text-sm font-semibold">Generate with AI</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
@@ -124,7 +125,7 @@ export default function CopilotSettingsPage() {
             <div className="flex items-center justify-between gap-3 mt-2">
               <p className="text-xs text-muted-foreground">Acts as a lightweight semantic layer + system prompt for your org.</p>
               {wasGenerated && !generating && (
-                <span className="text-xs text-primary inline-flex items-center gap-1 flex-shrink-0"><Sparkles className="h-3.5 w-3.5" /> AI draft — review &amp; edit before saving</span>
+                <span className="text-xs text-primary inline-flex items-center gap-1 flex-shrink-0"><Sparkle s={14} c="#00897b" /> AI draft — review &amp; edit before saving</span>
               )}
             </div>
           </div>

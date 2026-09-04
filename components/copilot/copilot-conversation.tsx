@@ -8,10 +8,10 @@ import Link from 'next/link';
 import { useCopilotStore, TASK_TEMPLATES } from '@/stores/copilotStore';
 
 /* icons */
+/* 4-point rounded star (per Akansha's visual references — replaces the old sparkle) */
 export const Sparkle = ({ s = 18, c = 'currentColor' }: { s?: number; c?: string }) => (
   <svg width={s} height={s} viewBox="0 0 24 24" fill="none" style={{ flexShrink: 0 }}>
-    <path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3z" fill={c} />
-    <path d="M19 4l.7 1.8L21.5 6.5l-1.8.7L19 9l-.7-1.8L16.5 6.5l1.8-.7L19 4z" fill={c} opacity={0.7} />
+    <path d="M12 3C12.8 8 16 11.2 21 12C16 12.8 12.8 16 12 21C11.2 16 8 12.8 3 12C8 11.2 11.2 8 12 3Z" fill={c} />
   </svg>
 );
 export const Ico = ({ d, s = 20, c = 'currentColor', sw = 1.8 }: { d: string; s?: number; c?: string; sw?: number }) => (
@@ -150,9 +150,20 @@ export function CopilotConversation({ compact, mini = false, onVisual }: { compa
           <div ref={scrollRef} style={{ flex: 1, overflowY: 'auto', padding: compact ? '16px' : '28px 0' }}>
             <div style={{ maxWidth: compact ? '100%' : 720, margin: '0 auto', height: empty ? '100%' : undefined }}>
               {empty ? (
-                <div style={{ height: '100%', minHeight: 200, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', padding: '0 20px' }}>
-                  <div style={{ fontSize: 18, fontWeight: 700, letterSpacing: '-0.3px', color: 'var(--text)' }}>Ask about your data</div>
-                  <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 6, maxWidth: 260, lineHeight: 1.5 }}>Answers come from your connected data — no SQL needed.</div>
+                <div style={{ height: '100%', minHeight: 200, display: 'flex', flexDirection: 'column', padding: '0 14px' }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+                    <div style={{ fontSize: 19, fontWeight: 700, letterSpacing: '-0.4px', color: 'var(--text)' }}>What can I help you find?</div>
+                    <div style={{ fontSize: 13, color: 'var(--text3)', marginTop: 8, maxWidth: 290, lineHeight: 1.55 }}>
+                      Ask in plain English — answers come from your connected data, and I can turn them into a chart or KPI.
+                    </div>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, paddingBottom: 12 }}>
+                    {TASK_TEMPLATES.map((t) => (
+                      <button key={t.title} onClick={() => ask(t.q)} className="cp-task" style={{ padding: '10px 12px' }}>
+                        <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text)' }}>{t.title}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 22, padding: compact ? 0 : '0 8px' }}>
@@ -214,7 +225,7 @@ export function CopilotConversation({ compact, mini = false, onVisual }: { compa
                           <div style={{ fontSize: 15, color: 'var(--text)', lineHeight: 1.55 }}>{r.clarify.text}</div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginTop: 12 }}>
                             {r.clarify.options.map((o) => (
-                              <button key={o} onClick={() => ask(o + ' by district')} className="cp-chip">{o}</button>
+                              <button key={o} onClick={() => ask(o)} className="cp-chip">{o}</button>
                             ))}
                           </div>
                         </div>
@@ -371,9 +382,11 @@ const CSS = `
 .cp-chip:hover { border-color:var(--teal); color:var(--teal); }
 .cp-link { display:inline-flex; align-items:center; gap:5px; border:none; background:none; color:var(--teal); font-size:13px; font-weight:600; cursor:pointer; font-family:inherit; padding:0; }
 .cp-inputwrap:focus-within { border-color:var(--teal)!important; box-shadow:0 0 0 3px rgba(0,137,123,.10); }
-.cp-sendbtn { display:inline-grid; place-items:center; width:34px; height:34px; border-radius:9px; border:none; background:var(--teal); cursor:pointer; transition:.12s; flex-shrink:0; }
-.cp-sendbtn:hover { background:var(--teal-hover); }
-.cp-sendbtn:disabled { background:#a8c4c1; cursor:not-allowed; }
+.cp-sendbtn { display:inline-grid; place-items:center; width:34px; height:34px; border-radius:10px; border:none; cursor:pointer; transition:.14s; flex-shrink:0;
+  background:linear-gradient(135deg,#46b9ab 0%,#12988a 55%,#00897b 100%);
+  box-shadow:0 2px 8px rgba(0,137,123,.25), inset 0 1px 0 rgba(255,255,255,.25); }
+.cp-sendbtn:hover { filter:brightness(1.06); }
+.cp-sendbtn:disabled { background:#cfe3e0; box-shadow:none; cursor:not-allowed; }
 .cp-createbar { display:flex; align-items:center; gap:9px; width:100%; margin-top:14px; padding:11px 14px; border:1px dashed var(--teal); border-radius:10px;
   background:var(--teal-light); color:var(--text); font-size:14px; cursor:pointer; font-family:inherit; text-align:left; transition:.12s; }
 .cp-createbar:hover { background:#dcefec; }
@@ -420,14 +433,15 @@ const CSS = `
 @keyframes cp-pulse { 0%,100%{ box-shadow:-4px 4px 16px rgba(0,137,123,.30) } 50%{ box-shadow:-4px 4px 22px rgba(0,137,123,.55) } }
 .cp-task { display:flex; flex-direction:column; gap:3px; width:100%; text-align:left; padding:14px 16px; border:1px solid var(--border); border-radius:12px; background:var(--surface); cursor:pointer; font-family:inherit; transition:.14s; }
 .cp-task:hover { border-color:var(--teal); background:var(--teal-light); }
-.cp-fab { position:fixed; right:22px; bottom:22px; width:48px; height:48px; border-radius:50%; border:none; cursor:pointer; display:grid; place-items:center; z-index:1190; transition:transform .16s;
-  background:radial-gradient(120% 120% at 32% 26%, #34c3b0 0%, #00a08e 42%, #00796b 74%, #005a4f 100%);
-  box-shadow:0 6px 18px rgba(0,120,107,.42), inset 0 0 0 1px rgba(0,70,60,.28); }
-.cp-fab::before { content:''; position:absolute; inset:-9px; border-radius:50%; z-index:-1;
-  background:radial-gradient(circle, rgba(0,168,148,.6), rgba(0,168,148,0) 68%); filter:blur(8px); animation:cp-fabglow 3s ease-in-out infinite; }
+/* FAB: white core, soft teal aura — colour as a halo, never a solid fill */
+.cp-fab { position:fixed; right:22px; bottom:22px; width:50px; height:50px; border-radius:50%; border:none; cursor:pointer; display:grid; place-items:center; z-index:1190; transition:transform .16s;
+  background:#ffffff;
+  box-shadow:0 2px 10px rgba(0,137,123,.16), inset 0 0 0 1px rgba(0,137,123,.10); }
+.cp-fab::before { content:''; position:absolute; inset:-16px; border-radius:50%; z-index:-1;
+  background:radial-gradient(circle, rgba(0,168,148,.38) 0%, rgba(94,204,188,.22) 45%, rgba(140,220,205,0) 72%);
+  filter:blur(10px); animation:cp-fabglow 3.5s ease-in-out infinite; }
 .cp-fab:hover { transform:translateY(-2px) scale(1.04); }
-.cp-fab svg { filter:drop-shadow(0 1px 1.5px rgba(0,45,38,.55)); }
-@keyframes cp-fabglow { 0%,100%{ opacity:.55; transform:scale(1) } 50%{ opacity:1; transform:scale(1.1) } }
+@keyframes cp-fabglow { 0%,100%{ opacity:.55; transform:scale(1) } 50%{ opacity:1; transform:scale(1.12) } }
 .cp-fabpop { position:fixed; right:22px; bottom:82px; width:372px; max-width:calc(100vw - 32px); height:540px; max-height:calc(100vh - 130px); background:var(--surface); border:1px solid var(--border); border-radius:16px; box-shadow:0 18px 50px rgba(0,0,0,.20); z-index:1190; display:flex; flex-direction:column; overflow:hidden; animation:cp-pop .18s ease; }
 @keyframes cp-pop { from { opacity:0; transform:translateY(12px) scale(.98) } to { opacity:1; transform:none } }
 .cp-glowwrap { position:relative; }

@@ -28,16 +28,76 @@ export const SUGGESTIONS = [
   'Compare completed vs pending surveys by district',
 ];
 
-/** Empty-state starters framed as tasks (not raw questions). Each runs a representative query. */
+/** Empty-state starters — DERIVED, not invented (see dalgo-copilot-foundation.md):
+ *  Dalgo pillars × top support pains × the V1 capability boundary. */
 export const TASK_TEMPLATES: { icon: string; title: string; desc: string; q: string; color: string }[] = [
-  { icon: 'M3 17l6-6 4 4 8-8', title: 'Track a trend', desc: 'See how a metric moved over time', q: 'How has enrolment changed over the last 6 months?', color: '#00897b' },
-  { icon: 'M4 9h16M4 15h16M10 3L8 21M16 3l-2 18', title: 'Get a number', desc: 'A count or total from your data', q: 'How many surveys were completed in Pune last month?', color: '#5b7cfa' },
-  { icon: 'M8 20V10M16 20V4M4 20h16', title: 'Compare groups', desc: 'Break a metric down by category', q: 'Compare completed vs pending surveys by district', color: '#9b5cf6' },
-  { icon: 'M21 21l-4.3-4.3M11 4a7 7 0 100 14 7 7 0 000-14z', title: 'Explore your data', desc: 'Not sure where to start? Ask broadly', q: 'Which districts are performing well?', color: '#f5a524' },
+  { icon: 'M3 17l6-6 4 4 8-8', title: 'Get an insight', desc: 'Trends, totals and comparisons from your data', q: 'Give me insights from my data', color: '#00897b' },
+  { icon: 'M8 20V10M16 20V4M4 20h16', title: 'Build charts', desc: 'Turn your data into a chart or KPI', q: 'Can you build charts?', color: '#00897b' },
+  { icon: 'M21 12a9 9 0 11-9-9', title: 'Check your data', desc: 'Is everything synced and up to date?', q: 'Is my data up to date?', color: '#00897b' },
+  { icon: 'M12 17h.01M12 13a2 2 0 10-2-2', title: 'What can Copilot do?', desc: 'What I can help with — and what I can’t yet', q: 'What can you do?', color: '#00897b' },
 ];
 
 export function getResponse(q: string): Resp {
   const s = q.toLowerCase();
+  // Capability question — sets the V1 boundary honestly (support pain: knowledge gap)
+  if (s.includes('what can you do') || s.includes('what can copilot') || s.includes('what can you help') || s.includes('how do i use')) {
+    return {
+      answer: "I answer questions from your connected data — counts, trends, comparisons — in plain English, and I can turn any answer into a chart or KPI. I can't yet read your existing dashboards, fix connections, or change pipelines; for those, the Ingest page and support have you covered.",
+      assumptions: '',
+      steps: ['Understanding your question'],
+    };
+  }
+  // Data freshness / completeness — support pain "data missing", V1-answerable from the warehouse
+  if (s.includes('up to date') || s.includes('up-to-date') || s.includes('synced') || s.includes('last sync') || s.includes('fresh') || (s.includes('data') && s.includes('missing'))) {
+    return {
+      answer: 'Your data looks up to date — all four datasets received new rows within the last day.',
+      assumptions: 'Freshness = time since each dataset last received new rows.',
+      steps: ['Understanding your question', 'Checking each dataset', 'Comparing last-sync times'],
+      table: { cols: ['Dataset', 'Last synced', 'Rows'], rows: [['surveys', 'Today, 6:02 am', '12,482'], ['enrolments', 'Today, 6:02 am', '8,910'], ['attendance', 'Yesterday, 11:30 pm', '21,067'], ['households', 'Today, 6:02 am', '3,204']] },
+      sql: 'SELECT source_table, MAX(loaded_at) AS last_synced, COUNT(*) AS rows\nFROM _sync_metadata\nGROUP BY source_table;',
+    };
+  }
+  // Connection / source / pipeline questions — top support pains V1 can't act on → graceful redirect
+  if (s.includes('connection') || s.includes('connector') || s.includes('pipeline') || s.includes('failing') || (s.includes('source') && (s.includes('add') || s.includes('delete') || s.includes('new')))) {
+    return {
+      answer: '', assumptions: '',
+      steps: ['Understanding your question', 'Checking what I can access'],
+      variant: 'scope',
+      note: "I can't see or fix connections yet — I only read the data they load. The Ingest page shows each connection's status and last sync, and support can dig into one that keeps failing. Meanwhile, I can tell you if any data looks stale — just ask “is my data up to date?”",
+    };
+  }
+  // "Can you build charts?" (the Build-charts card) — say yes, then ask which data to represent
+  if (s.includes('chart') && (s.includes('can you') || s.includes('build') || s.includes('make') || s.includes('create'))) {
+    return {
+      answer: '', assumptions: '', steps: ['Understanding your question'],
+      clarify: {
+        text: 'Yes — I can build charts and KPIs from your data. Which data would you like represented?',
+        options: ['Enrolment over the last 6 months', 'Completed surveys by district', 'Completed surveys in Pune'],
+      },
+    };
+  }
+  // Broad "give me insights" ask (the Get-an-insight card) — Copilot does the noticing
+  if (s.includes('insight')) {
+    const d = [
+      { label: 'Feb', value: 1120 }, { label: 'Mar', value: 1180 }, { label: 'Apr', value: 1240 },
+      { label: 'May', value: 1320 }, { label: 'Jun', value: 1410 }, { label: 'Jul', value: 1498 },
+    ];
+    return {
+      answer: 'Three things stand out in your data right now.',
+      assumptions: 'Looking across enrolments and surveys · last 6 months.',
+      steps: ['Understanding your question', 'Scanning enrolments & surveys', 'Looking for notable changes', 'Summarising the highlights'],
+      table: {
+        cols: ['What', 'Why it matters'],
+        rows: [
+          ['Enrolment is up 34% (Feb–Jul)', 'Strongest growth streak this year'],
+          ['Pune leads completed surveys (142)', 'Highest of all districts in July'],
+          ['Nagpur has 61 pending surveys', 'Largest backlog — may need follow-up'],
+        ],
+      },
+      sql: "SELECT metric, value, period\nFROM insight_highlights\nWHERE period = 'last_6_months'\nORDER BY significance DESC\nLIMIT 3;",
+      chart: { kind: 'line', title: 'Monthly enrolment', data: d },
+    };
+  }
   // Text-only answer (a definition / explanation — no table or chart)
   if (s.includes('what does') || s.includes('definition') || s.includes('define ') || (s.includes('mean') && s.length < 70)) {
     return {
@@ -60,7 +120,7 @@ export function getResponse(q: string): Resp {
       chart: { kind: 'line', title: 'Monthly enrolment', data: d },
     };
   }
-  if (s.includes('pune') || (s.includes('survey') && s.includes('completed') && !s.includes('pending'))) {
+  if (s.includes('pune') || (s.includes('survey') && s.includes('completed') && !s.includes('pending') && !s.includes('district'))) {
     const d = [
       { label: 'Wk 1', value: 31 }, { label: 'Wk 2', value: 38 }, { label: 'Wk 3', value: 36 }, { label: 'Wk 4', value: 37 },
     ];
@@ -73,18 +133,18 @@ export function getResponse(q: string): Resp {
       chart: { kind: 'bar', title: 'Weekly completed surveys — Pune', data: d },
     };
   }
-  if (s.includes('performing') || s.includes('well') || (s.includes('district') && !s.includes('compare'))) {
+  if (s.includes('performing') || (s.includes('well') && s.includes('district'))) {
     return {
       answer: '',
       assumptions: '',
       steps: ['Understanding your question', 'Checking what “performing well” could mean'],
       clarify: {
         text: '“Performing well” can mean a few things. I read it as survey completion rate — by that, Pune (91%) and Nashik (88%) are highest. Did you mean something else?',
-        options: ['By completion rate', 'By enrolment growth', 'By attendance'],
+        options: ['Completed surveys by district', 'Enrolment over the last 6 months', 'Attendance summary'],
       },
     };
   }
-  if (s.includes('compare') || (s.includes('completed') && s.includes('pending'))) {
+  if (s.includes('compare') || (s.includes('completed') && s.includes('pending')) || (s.includes('completed') && s.includes('district'))) {
     const d = [
       { label: 'Pune', value: 142 }, { label: 'Nashik', value: 131 }, { label: 'Aurangabad', value: 121 },
       { label: 'Solapur', value: 120 }, { label: 'Nagpur', value: 98 },
@@ -171,11 +231,14 @@ const STEP_MS = 650; // ms between streamed working-steps
 
 /** Preview scenarios — let the designer jump straight to each response state without typing.
  *  Each carries the user question that triggers it + the canned response to render. */
-export type ScenarioKey = 'normal' | 'clarify' | 'textonly' | 'unsure' | 'nodata' | 'scope' | 'error' | 'slow';
+export type ScenarioKey = 'normal' | 'clarify' | 'textonly' | 'unsure' | 'freshness' | 'platform' | 'capability' | 'nodata' | 'scope' | 'error' | 'slow';
 export const SCENARIOS: { key: ScenarioKey; label: string; q: string; resp: Resp }[] = [
   { key: 'normal', label: 'Answer + chart', q: 'How many surveys were completed in Pune last month?', resp: getResponse('How many surveys were completed in Pune last month?') },
   { key: 'clarify', label: 'Clarifying question', q: 'Which districts are performing well?', resp: getResponse('Which districts are performing well?') },
   { key: 'textonly', label: 'Text answer', q: 'What does “completed” mean in our data?', resp: getResponse('What does “completed” mean in our data?') },
+  { key: 'freshness', label: 'Check data', q: 'Is my data up to date?', resp: getResponse('Is my data up to date?') },
+  { key: 'platform', label: 'Platform question', q: 'Why does my KoboToolbox connection keep failing?', resp: getResponse('Why does my KoboToolbox connection keep failing?') },
+  { key: 'capability', label: 'What can it do', q: 'What can you do?', resp: getResponse('What can you do?') },
   { key: 'unsure', label: 'Low confidence', q: 'Are we on track to hit our enrolment target?', resp: { answer: 'Probably — enrolment is up 34% over the last 6 months and trending toward ~1,500 a month.', assumptions: '', steps: ['Understanding your question', 'Looking for a target', 'Estimating from the trend'], table: { cols: ['Month', 'Enrolled'], rows: [['Jun', 1410], ['Jul', 1498]] }, caveat: 'Low confidence — I couldn’t find an actual enrolment target in your data, so this is an estimate from the recent trend. Set a target to get a real answer.' } },
   { key: 'slow', label: 'Takes a while', q: 'Compare completed vs pending surveys by district', resp: { ...getResponse('Compare completed vs pending surveys by district'), steps: ['Understanding your question', 'Finding the right datasets', 'Joining surveys with districts', 'Aggregating by status', 'Double-checking the numbers', 'Summarising the result'] } },
   { key: 'nodata', label: 'No answer found', q: 'How many surveys were completed in Goa last month?', resp: { answer: '', assumptions: '', steps: ['Understanding your question', 'Looking for Goa in your data', 'Counting completed surveys'], variant: 'nodata', note: "I couldn't find any surveys for Goa in August 2026 — Goa isn't in your connected datasets. Try a district you run programmes in, or widen the date range." } },

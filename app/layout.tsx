@@ -1,8 +1,9 @@
 import './globals.css';
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { CopilotStyles } from '@/components/copilot/copilot-conversation';
+import { CopilotStyles, Ico } from '@/components/copilot/copilot-conversation';
 import { CopilotFab } from '@/components/copilot/copilot-fab';
+import { SideNav } from '@/components/shell/side-nav';
 
 export const metadata: Metadata = {
   title: 'Dalgo Copilot',
@@ -14,18 +15,10 @@ const topbar: React.CSSProperties = {
   flexShrink: 0,
   display: 'flex',
   alignItems: 'center',
-  gap: 14,
-  padding: '0 20px',
+  gap: 12,
+  padding: '0 18px',
   borderBottom: '1px solid #e8ecef',
   background: '#fff',
-};
-const navlink: React.CSSProperties = {
-  fontSize: 14,
-  fontWeight: 500,
-  color: '#5c5c6d',
-  textDecoration: 'none',
-  padding: '6px 10px',
-  borderRadius: 8,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -41,12 +34,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               Copilot prototype
             </span>
             <div style={{ flex: 1 }} />
-            <nav style={{ display: 'flex', gap: 4 }}>
-              <Link href="/copilot" style={navlink}>Copilot</Link>
-              <Link href="/settings/copilot" style={navlink}>Settings</Link>
-            </nav>
+            <button
+              aria-label="Notifications"
+              style={{ display: 'grid', placeItems: 'center', width: 34, height: 34, borderRadius: 8, border: 'none', background: 'none', cursor: 'pointer' }}
+            >
+              <Ico d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 01-3.46 0" s={19} c="#5c5c6d" />
+            </button>
           </header>
-          <main style={{ flex: 1, minHeight: 0, display: 'flex', flexDirection: 'column' }}>{children}</main>
+          <div style={{ flex: 1, minHeight: 0, display: 'flex' }}>
+            <SideNav />
+            <main style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column' }}>{children}</main>
+          </div>
         </div>
         <CopilotStyles />
         <CopilotFab />
