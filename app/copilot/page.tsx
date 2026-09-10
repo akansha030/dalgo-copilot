@@ -26,8 +26,8 @@ export default function CopilotPage() {
         <button className="cp-iconbtn" onClick={toggleCopilotSidebar} title="Chats" aria-label="Toggle chats">
           <Ico d={ICON.sidebar} s={18} c={copilotSidebarOpen ? 'var(--teal)' : 'var(--text2)'} />
         </button>
-        <Sparkle s={18} c="var(--teal)" />
-        <span style={{ fontWeight: 600, fontSize: 15 }}>Copilot</span>
+        <Sparkle s={18} grad />
+        <span style={{ fontWeight: 600, fontSize: 15 }}>Dalgo Copilot</span>
         <div style={{ flex: 1 }} />
       </div>
 

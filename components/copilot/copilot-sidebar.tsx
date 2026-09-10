@@ -29,15 +29,9 @@ export function CopilotSidebar() {
       <button className="cp-newchat" onClick={reset}>
         <Ico d={P.plus} s={16} c="var(--teal)" /> New chat
       </button>
-      <div className="cp-histlabel">History</div>
-      {history.length === 0 ? (
-        <div style={{ padding: '14px 10px', textAlign: 'center', color: 'var(--text3)' }}>
-          <div style={{ display: 'inline-grid', placeItems: 'center', width: 36, height: 36, borderRadius: 10, background: 'var(--surface)', marginBottom: 8 }}>
-            <Ico d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={17} c="var(--placeholder)" />
-          </div>
-          <div style={{ fontSize: 13, lineHeight: 1.5 }}>No conversations yet.<br />Your chats will show up here.</div>
-        </div>
-      ) : (
+      {/* Empty history is just a quieter label — no icon, no body copy (per the "No history" frame) */}
+      <div className="cp-histlabel">{history.length === 0 ? 'No chat history yet' : 'History'}</div>
+      {history.length === 0 ? null : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2, overflowY: 'auto' }}>
           {history.map((h, i) => (
             <div key={`${h.q}-${i}`} className="cp-histrow">
@@ -54,7 +48,6 @@ export function CopilotSidebar() {
               ) : (
                 <>
                   <button className="cp-histitem" onClick={() => { reset(); ask(h.q); }}>
-                    <Ico d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" s={15} c="var(--text3)" />
                     <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{h.t}</span>
                   </button>
                   <button
